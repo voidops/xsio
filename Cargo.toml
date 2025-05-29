@@ -2,3 +2,10 @@
 name = "xsio"
 version = "0.1.0"
 edition = "2021"
+
+description = "High-performance Cross-platform Low-level Socket I/O for Rust."
+license = "MIT"
+repository = "https://github.com/voidops/xsio"
+homepage = "https://github.com/voidops/xsio"
+documentation = "https://docs.rs/xsio"
+readme = "README.md"
