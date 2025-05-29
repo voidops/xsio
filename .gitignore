@@ -1,0 +1,16 @@
+*
+
+!/.gitignore
+!/.gitattributes
+!/.gitattributes
+
+!/LICENSE
+!/Cargo.toml
+!/Cargo.lock
+
+!/src/
+!/src/**
+!/tests/
+!/tests/**
+
+!/README.md
