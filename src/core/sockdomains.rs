@@ -13,6 +13,8 @@ pub struct AfInet6;
 pub struct AfUnix;
 #[cfg(not(windows))]
 pub struct Packet;
+pub struct AfXdp;
+
 
 impl AddressFamily for AfInet {
     const DOMAIN: i32 = sys::AF_INET;
@@ -29,6 +31,11 @@ impl AddressFamily for AfUnix {
 #[cfg(not(windows))]
 impl AddressFamily for Packet {
     const DOMAIN: i32 = sys::AF_PACKET;
+}
+
+#[cfg(not(windows))]
+impl AddressFamily for AfXdp {
+    const DOMAIN: i32 = sys::AF_XDP;
 }
 
 pub struct SockStream;
@@ -59,7 +66,14 @@ pub trait Protocol {
 pub struct IpProtoTcp;
 pub struct IpProtoUdp;
 pub struct IpProtoIcmp;
+pub struct IpProtoIcmpv6;
 pub struct IpProtoSctp;
+pub struct IpProtoQuic;
+pub struct NoProtocol;
+
+impl Protocol for NoProtocol {
+    const PROTOCOL: i32 = 0;
+}
 
 impl Protocol for IpProtoTcp {
     const PROTOCOL: i32 = sys::IPPROTO_TCP;
@@ -73,8 +87,16 @@ impl Protocol for IpProtoIcmp {
     const PROTOCOL: i32 = sys::IPPROTO_ICMP;
 }
 
+impl Protocol for IpProtoIcmpv6 {
+    const PROTOCOL: i32 = sys::IPPROTO_ICMPV6;
+}
+
 impl Protocol for IpProtoSctp {
     const PROTOCOL: i32 = sys::IPPROTO_SCTP;
+}
+
+impl Protocol for IpProtoQuic {
+    const PROTOCOL: i32 = sys::IPPROTO_QUIC;
 }
 
 pub trait ValidSocket {}
@@ -85,13 +107,18 @@ impl ValidSocket for (AfInet, SockDgram, IpProtoUdp) {}
 impl ValidSocket for (AfInet, SockRaw) {}
 impl ValidSocket for (AfInet, SockRaw, IpProtoIcmp) {}
 
-impl ValidSocket for (AfInet6, SockStream) {}
-impl ValidSocket for (AfInet6, SockDgram) {}
+impl ValidSocket for (AfInet6, SockStream, IpProtoTcp) {}
+impl ValidSocket for (AfInet6, SockStream, IpProtoSctp) {}
+impl ValidSocket for (AfInet6, SockDgram, IpProtoUdp) {}
 impl ValidSocket for (AfInet6, SockRaw) {}
+impl ValidSocket for (AfInet, SockRaw, IpProtoIcmpv6) {}
 
 impl ValidSocket for (AfUnix, SockStream) {}
 impl ValidSocket for (AfUnix, SockDgram) {}
 impl ValidSocket for (AfUnix, SeqPacket) {}
+
+impl ValidSocket for (AfXdp, SockRaw, NoProtocol) {}
+impl ValidSocket for (AfXdp, SockRaw, IpProtoQuic) {}
 
 #[cfg(not(windows))]
 impl ValidSocket for (Packet, SockRaw) {}
