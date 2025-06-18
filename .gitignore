@@ -2,7 +2,6 @@
 
 !/.gitignore
 !/.gitattributes
-!/.gitattributes
 
 !/LICENSE
 !/Cargo.toml
@@ -16,10 +15,10 @@
 !/.cargo/
 !/.cargo/config.toml
 
+!/README.md
+
 !/tools/
 !/tools/**
 !/.vscode/
 !/.vscode/launch.json
 !/.vscode/tasks.json
-
-!/README.md

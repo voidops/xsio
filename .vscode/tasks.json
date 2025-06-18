@@ -17,12 +17,12 @@
           ],
           "background": {
             "activeOnStart": true,
-            "beginsPattern": "",
-            "endsPattern": "^$"
+            "beginsPattern": ".",
+            "endsPattern": "READY"
           }
         }
       ],
-      "command": "cargo test --no-run --test xudpserver_test --package xsio && sudo bash -c 'T=$(ls -t target/debug/deps/xudpserver_test-* | head -n1); ln -sf \"$PWD/$T\" tools/debug/xudpserver_test-latest; sudo debug/lldb-server platform --server --listen \"*:54321\"'"
+      "command": "cargo test --no-run --test XUdpServer_Xdp --package xsio && sudo bash -c 'T=$(ls -t target/debug/deps/XUdpServer_Xdp-* | head -n1); ln -sf \"$PWD/$T\" $PWD/target/debug/XUdpServer_Xdp-latest; sudo tools/lldb-server platform --server --listen \"*:54321\" & echo READY'"
     }
   ]
 }
