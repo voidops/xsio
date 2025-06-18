@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ffi::CString, io::{Error, ErrorKind, Result}, mem::zeroed};
+use std::{collections::HashMap, ffi::CString, io::{Error, ErrorKind, Result}, mem::zeroed, os::fd::RawFd};
 
 use crate::{bpf, bpf_attr, BpfInsn, BpfMapDef, Elf, Elf64Rel, Elf64Sym, BPF_MAP_CREATE, BPF_PROG_LOAD, BPF_PROG_TYPE_XDP};
 
@@ -130,7 +130,8 @@ pub fn load_xdp(elf_data: &[u8], maps_section_name: &str) -> Result<XdpFd> {
     Ok(XdpFd(prog_fd))
 }
 
-unsafe fn create_map_fd(def: &BpfMapDef) -> Result<u32> {
+
+unsafe fn create_map_fd(def: &BpfMapDef) -> Result<RawFd> {
     let mut attr: bpf_attr = zeroed();
     {
         let map_create = &mut attr.map_create;
@@ -139,7 +140,6 @@ unsafe fn create_map_fd(def: &BpfMapDef) -> Result<u32> {
         map_create.value_size  = def.value_size;
         map_create.max_entries = def.max_entries;
         map_create.map_flags   = def.map_flags;
-        // Optionally fill map_name, numa_node, etc.
     }
     let fd = bpf(BPF_MAP_CREATE, &attr, std::mem::size_of::<bpf_attr>() as u32);
     if fd < 0 {

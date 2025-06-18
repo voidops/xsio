@@ -40,19 +40,18 @@ mod tests {
         let server = Socket::new(AfInet, SockDgram, IpProtoUdp).unwrap();
         server.bind(server_addr).unwrap();
 
-        let addr: SockAddrV4Buffer = server_addr.into_sockaddrv4();
         {
             let client = Socket::new(AfInet, SockDgram, IpProtoUdp).unwrap();
-            client.send_to(test_packet.as_bytes(), &addr, 0).unwrap();
+            client.send_to(test_packet.as_bytes(), &server_addr.into_sockaddrv4(), 0).unwrap();
         }
 
         let mut buf = [0u8; 42];
-        let mut addr_buf = SockAddrV4Buffer::new();
-        let len = server.recv_from(&mut buf, &mut addr_buf, 0).unwrap();
+        let mut buf_len = 0;
+        let src = server.recv_from_v4(&mut buf, &mut buf_len, 0).unwrap();
 
-        println!("[IpProtoUdp Test] Successfully received {}/{} bytes from {}: {:?}", len, buf.len(), addr_buf.to_socket_addr(), std::str::from_utf8(&buf).unwrap());
+        println!("[IpProtoUdp Test] Successfully received {}/{} bytes from {}: {:?}", buf_len, buf.len(), src.to_ipv4_addr(), std::str::from_utf8(&buf).unwrap());
 
-        assert_eq!(&buf[..len], test_packet.as_bytes());
+        assert_eq!(&buf[..buf_len], test_packet.as_bytes());
     }
 
     #[test]
@@ -74,10 +73,9 @@ mod tests {
         let mut buf = [0u8; 42];
         let len = client.recv(&mut buf, 0).unwrap();
 
-        let mut addr_buf = SockAddrV4Buffer::new();
-        client.peer_name(&mut addr_buf).unwrap();
+        let addr_buf = client.peer_name_v4().unwrap();
 
-        println!("[IpProtoTcp Test] Successfully received {}/{} bytes from {}: {:?}", len, buf.len(), addr_buf.to_socket_addr(), std::str::from_utf8(&buf).unwrap());
+        println!("[IpProtoTcp Test] Successfully received {}/{} bytes from {}: {:?}", len, buf.len(), addr_buf.to_ipv4_addr(), std::str::from_utf8(&buf).unwrap());
 
         assert_eq!(&buf[..len], test_packet.as_bytes());
 
@@ -95,8 +93,8 @@ mod tests {
         server.set_socket_option(SoRecvTimeout, std::time::Duration::from_secs(1)).unwrap();
 
         let mut buf = [0u8; 42];
-        let mut addr_buf = SockAddrV4Buffer::new();
-        let result = server.recv_from(&mut buf, &mut addr_buf, 0);
+        let mut buf_len = 0;
+        let result = server.recv_from_v4(&mut buf, &mut buf_len, 0);
 
         match result {
             Ok(_) => panic!("Test failed: Expected timeout but data was received"),

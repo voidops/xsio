@@ -1,0 +1,114 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'xsio'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=xsio"
+                ],
+                "filter": {
+                    "name": "xsio",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'socket'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=socket",
+                    "--package=xsio"
+                ],
+                "filter": {
+                    "name": "socket",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'socket_test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=socket_test",
+                    "--package=xsio"
+                ],
+                "filter": {
+                    "name": "socket_test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'xudpserver_test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=xudpserver_test",
+                    "--package=xsio"
+                ],
+                "filter": {
+                    "name": "xudpserver_test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'xudpserver_test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=xudpserver_test",
+                    "--package=xsio"
+                ],
+                "filter": {
+                    "name": "xudpserver_test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'xudpserver_test' (root)",
+            "program": "${workspaceFolder}/target/debug/xudpserver_test-latest",
+            "initCommands": [
+                "platform select remote-linux",
+                "platform connect connect://127.0.0.1:54321",
+            ],
+            "args": [ "--nocapture" ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build_xudpserver_test_and_launch_lldbserver"
+        }
+    ]
+}

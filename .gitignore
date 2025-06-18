@@ -16,4 +16,10 @@
 !/.cargo/
 !/.cargo/config.toml
 
+!/tools/
+!/tools/**
+!/.vscode/
+!/.vscode/launch.json
+!/.vscode/tasks.json
+
 !/README.md

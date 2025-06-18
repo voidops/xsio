@@ -329,7 +329,7 @@ impl XUdpServerWorker {
                 return Err(std::io::Error::last_os_error());
             }
             dprintln!(self, "[{} INFO] Bound to interface: {} (index: {})", self.name, iface, ifindex);
-            let mut attr = bpf_attr {
+            let attr = bpf_attr {
                 prog_load: unsafe { std::mem::zeroed() },
             };
             /*
