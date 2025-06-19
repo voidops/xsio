@@ -1,5 +1,4 @@
-use std::os::raw::*;
-use super::{SockAddrBuffer, SockAddrV4Buffer, SockAddrV6Buffer, SockaddrConvert, SocketAddrV4IntoSockAddrV4Buffer, SocketAddrV6IntoSockAddrV6Buffer, TimeValFromDuration, ToIpv4Addr};
+use std::ffi::c_int;
 
 pub const AF_UNIX: c_int = 1;
 pub const AF_INET: c_int = 2;
@@ -78,15 +77,17 @@ pub const IPPROTO_RESERVED_RAW: c_int = 257;
 pub const IPPROTO_RESERVED_IPSEC: c_int = 258;
 pub const IPPROTO_RESERVED_IPSECOFFLOAD: c_int = 259;
 pub const IPPROTO_RESERVED_WNV: c_int = 260;
-pub const IPPROTO_RESERVED_MAX: c_int = 261;
-
+pub const IPPROTO_QUIC: c_int = 261;
 
 pub const TCP_NODELAY: c_int = 0x0001;
 
 pub const SHUT_RD: c_int = 0;
 pub const SHUT_WR: c_int = 1;
 
+pub const SYS_SENDMMSG: usize = 307;
+
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct SockLen {
     pub len: c_int,
 }
@@ -98,15 +99,19 @@ pub struct SockAddr {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct InAddr {
     pub s_addr: [u8; 4]
 }
+
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct In6Addr {
     pub s6_addr: [u8; 16],
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct SockAddrIn {
     pub sin_family: u16,
     pub sin_port: u16,
@@ -115,6 +120,7 @@ pub struct SockAddrIn {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct SockAddrIn6 {
     pub sin6_family: u16,
     pub sin6_port: u16,
@@ -124,19 +130,41 @@ pub struct SockAddrIn6 {
 }
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct TimeVal {
     pub tv_sec: i64,
     pub tv_usec: i64,
 }
 
-impl TimeValFromDuration for TimeVal {
-    fn from_duration(duration: std::time::Duration) -> TimeVal {
-        TimeVal {
-            tv_sec: duration.as_secs() as i64,
-            tv_usec: (duration.subsec_micros() as i64),
-        }
-    }
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Iovec {
+    pub iov_base: *mut u8,
+    pub iov_len: usize 
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Msghdr {
+    pub msg_name: *mut u8,
+    pub msg_namelen: u32,
+    pub msg_iov: *mut Iovec,
+    pub msg_iovlen: usize,
+    pub msg_control: *mut u8,
+    pub msg_controllen: usize,
+    pub msg_flags: i32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Mmsghdr {
+    pub msg_hdr: Msghdr, pub msg_len: u32
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Timespec {
+    pub tv_sec: i64,
+    pub tv_nsec: i64,
 }
 
 extern "system" {
@@ -155,129 +183,9 @@ extern "system" {
     pub fn shutdown(s: usize, how: c_int) -> c_int;
     pub fn closesocket(s: usize) -> c_int;
     pub fn setsockopt(s: usize, level: c_int,optname: c_int, optval: *const i8, optlen: c_int) -> c_int;
+    
+    pub fn RIOReceive(socket: usize, buf: *mut u8, len: usize, flags: c_int, bytes_received: *mut usize) -> c_int;
 }
-/*
-impl<const SIZE: usize> SockaddrConvert for SockAddrBuffer<SIZE>
-{
-    #[inline(always)]
-    fn to_socket_addr(&self) -> std::io::Result<std::net::SocketAddr> {
-        let af_family = u16::from_le_bytes(self.0[0..2].try_into().unwrap());
-        unsafe {
-            match af_family as c_int {
-                AF_INET => {
-                    let addr_in = &*(self.0.as_ptr() as *const SockAddrIn);
-                    Ok(std::net::SocketAddr::V4(std::net::SocketAddrV4::new(
-                        std::net::Ipv4Addr::from(addr_in.sin_addr.s_addr),
-                        addr_in.sin_port,
-                    )))
-                }
-                AF_INET6 => {
-                    let addr_in = &*(self.0.as_ptr() as *const SockAddrIn6);
-                    Ok(std::net::SocketAddr::V6(std::net::SocketAddrV6::new(
-                        std::net::Ipv6Addr::from(addr_in.sin6_addr.s6_addr),
-                        addr_in.sin6_port,
-                        addr_in.sin6_flowinfo,
-                        addr_in.sin6_scope_id
-                    )))
-                }
-                _ => Err(std::io::Error::new(std::io::ErrorKind::Other, "Unsupported address family")),
-            }
-        }
-    }
-    #[inline(always)]
-    fn addr_len(&self) -> usize {
-        let af_family = u16::from_le_bytes(self.0[0..2].try_into().unwrap());
-        match af_family as c_int {
-            AF_INET => std::mem::size_of::<SockAddrIn>(),
-            AF_INET6 => std::mem::size_of::<SockAddrIn6>(),
-            _ => 0
-        }
-    }
-}
-*/
-impl SockaddrConvert for [u8; 128] {
-    #[inline(always)]
-    fn to_socket_addr(&self) -> std::io::Result<std::net::SocketAddr> {
-        let af_family = u16::from_le_bytes(self[0..2].try_into().unwrap());
-        unsafe {
-            match af_family as c_int {
-                AF_INET => {
-                    let addr_in = &*(self.as_ptr() as *const SockAddrIn);
-                    Ok(std::net::SocketAddr::V4(std::net::SocketAddrV4::new(
-                        std::net::Ipv4Addr::from(addr_in.sin_addr.s_addr),
-                        addr_in.sin_port,
-                    )))
-                }
-                AF_INET6 => {
-                    let addr_in = &*(self.as_ptr() as *const SockAddrIn6);
-                    Ok(std::net::SocketAddr::V6(std::net::SocketAddrV6::new(
-                        std::net::Ipv6Addr::from(addr_in.sin6_addr.s6_addr),
-                        addr_in.sin6_port,
-                        addr_in.sin6_flowinfo,
-                        addr_in.sin6_scope_id
-                    )))
-                }
-                _ => Err(std::io::Error::new(std::io::ErrorKind::Other, "Unsupported address family")),
-            }
-        }
-    }
-    #[inline(always)]
-    fn addr_len(&self) -> usize {
-        let af_family = u16::from_le_bytes(self[0..2].try_into().unwrap());
-        match af_family as c_int {
-            AF_INET => std::mem::size_of::<SockAddrIn>(),
-            AF_INET6 => std::mem::size_of::<SockAddrIn6>(),
-            _ => 0
-        }
-    }
-}
-
-impl SocketAddrV4IntoSockAddrV4Buffer for std::net::SocketAddrV4 {
-    fn into_sockaddrv4(&self) -> SockAddrV4Buffer {
-        let ip_octets = self.ip().octets();
-        SockAddrV4Buffer {
-            raw: std::mem::MaybeUninit::new(SockAddrIn {
-                sin_family: AF_INET as u16,
-                sin_port: self.port().to_be(),
-                sin_addr: InAddr {
-                    s_addr: ip_octets,
-                },
-                sin_zero: [0; 8],
-            })
-        }
-    }
-}
-
-impl SocketAddrV6IntoSockAddrV6Buffer for std::net::SocketAddrV6 {
-    fn into_sockaddrv6(&self) -> SockAddrV6Buffer {
-        let ip_octets = self.ip().octets();
-        SockAddrV6Buffer {
-            raw: std::mem::MaybeUninit::new(SockAddrIn6 {
-                sin6_family: AF_INET6 as u16,
-                sin6_port: self.port().to_be(),
-                sin6_flowinfo: self.flowinfo(),
-                sin6_addr: In6Addr {
-                    s6_addr: ip_octets,
-                },
-                sin6_scope_id: self.scope_id()
-            })
-        }
-    }
-}
-
-impl ToIpv4Addr for SockAddrV4Buffer {
-    #[inline(always)]
-    fn to_addr(&self) -> std::net::Ipv4Addr {
-        let addr_in = self.as_raw();
-        std::net::Ipv4Addr::from(addr_in.sin_addr.s_addr)
-    }
-
-    #[inline(always)]
-    fn to_socket_addr(&self) -> std::net::SocketAddr {
-        let addr_in = self.as_raw();
-        std::net::SocketAddr::V4(std::net::SocketAddrV4::new(
-            std::net::Ipv4Addr::from(addr_in.sin_addr.s_addr),
-            addr_in.sin_port,
-        ))
-    }
+extern "C" {
+    pub fn syscall(num: usize, ...) -> isize;
 }

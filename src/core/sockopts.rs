@@ -53,7 +53,7 @@ macro_rules! socket_option {
 }
 
 socket_option!(SoReuseAddr, bool, sys::SOL_SOCKET, sys::SO_REUSEADDR);
-socket_option!(SoRecvBufSize, i32, sys::SOL_SOCKET, sys::SO_RCVBUF);
+socket_option!(SoRecvBufSize, usize, sys::SOL_SOCKET, sys::SO_RCVBUF);
 socket_option!(SoSendBufSize, i32, sys::SOL_SOCKET, sys::SO_SNDBUF);
 socket_option!(SoRecvTimeout, std::time::Duration, sys::SOL_SOCKET, sys::SO_RCVTIMEO, std::mem::size_of::<sys::TimeVal>() as i32);
 socket_option!(SoSendTimeout, std::time::Duration, sys::SOL_SOCKET, sys::SO_SNDTIMEO, std::mem::size_of::<sys::TimeVal>() as i32);

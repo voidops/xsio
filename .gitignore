@@ -13,4 +13,7 @@
 !/tests/
 !/tests/**
 
+!/.cargo/
+!/.cargo/config.toml
+
 !/README.md
