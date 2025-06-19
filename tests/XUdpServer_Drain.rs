@@ -13,11 +13,11 @@ mod tests {
     
     #[test]
     fn xudpserver_test () {
-        println!("Starting XUdpServer test...");
         std::thread::sleep(std::time::Duration::from_millis(1));
-        let mut server = XUdpServer::new("127.0.0.1:42070".parse().unwrap());
         let total_requests = Arc::new(AtomicUsize::new(0));
         let counter = total_requests.clone();
+        let address = "127.0.0.1:42070".parse().unwrap();
+        let mut server = XUdpServer::new(address);
         server.worker(move |worker| {
             let mut worker_counter = 0;
             let global_counter = total_requests.clone();
@@ -34,19 +34,17 @@ mod tests {
                     worker_counter = 0;
                 }
             });
-        }).unwrap();
+        });
         server.debug(true);
         server.start(1).unwrap();
         assert!(server.is_running());
         // Send 1 million packets to the server
-        /*
         server.floodtest(42070)
             .with_threads(8)
             .with_payload_size(64)
-            .with_duration(std::time::Duration::from_secs(10))
+            .with_duration(std::time::Duration::from_secs(5))
             .with_logs(true)
             .start();
-        */
         server.stop();
         server.wait(None);
         assert!(!server.is_running());
