@@ -1,0 +1,28 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build_xudpserver_test_and_launch_lldbserver",
+      "type": "shell",
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+                "regexp": ".",
+                "file": 1,
+                "location": 2,
+                "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".",
+            "endsPattern": "READY"
+          }
+        }
+      ],
+      "command": "cargo test --no-run --test XUdpServer_Xdp --package xsio && sudo bash -c 'T=$(ls -t target/debug/deps/XUdpServer_Xdp-* | head -n1); ln -sf \"$PWD/$T\" $PWD/target/debug/XUdpServer_Xdp-latest; sudo tools/lldb-server platform --server --listen \"*:54321\" & echo READY'"
+    }
+  ]
+}

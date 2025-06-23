@@ -1,10 +1,9 @@
-use std::net::{IpAddr, SocketAddrV4};
+use std::net::SocketAddrV4;
 
-use crate::{server::XUdpServer, AfInet, SockDgram, Socket, SocketAddrV4IntoSockAddrV4Buffer};
+use crate::{AfInet, SockDgram, Socket, SocketAddrV4IntoSockAddrV4Buffer, XUdpServer};
 
 pub struct UdpFloodTest<'a> {
-    target_server: &'a XUdpServer,
-    target: IpAddr,
+    pub(crate) target_server: &'a XUdpServer,
     port: u16,
     thread_count: usize,
     payload_size: usize,
@@ -13,10 +12,9 @@ pub struct UdpFloodTest<'a> {
 }
 
 impl<'a> UdpFloodTest<'a> {
-    pub fn new(server: &'a XUdpServer, target: IpAddr, port: u16) -> Self {
+    pub fn new(server: &'a XUdpServer, port: u16) -> Self {
         UdpFloodTest {
             target_server: server,
-            target,
             port,
             thread_count: 1,
             payload_size: 64,
@@ -24,23 +22,23 @@ impl<'a> UdpFloodTest<'a> {
             logging: false,
         }
     }
-    pub fn with_threads(mut self, thread_count: usize) -> Self {
+    pub fn with_threads(&mut self, thread_count: usize) -> &mut Self {
         self.thread_count = thread_count;
         self
     }
-    pub fn with_payload_size(mut self, payload_size: usize) -> Self {
+    pub fn with_payload_size(&mut self, payload_size: usize) -> &mut Self {
         self.payload_size = payload_size;
         self
     }
-    pub fn with_duration(mut self, duration: std::time::Duration) -> Self {
+    pub fn with_duration(&mut self, duration: std::time::Duration) -> &mut Self {
         self.duration = duration;
         self
     }
-    pub fn with_logs(mut self, logs: bool) -> Self {
+    pub fn with_logs(&mut self, logs: bool) -> &mut Self {
         self.logging = logs;
         self
     }
-    pub fn start(self) {
+    pub fn start(&self) {
         use std::sync::Arc;
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::thread;
@@ -99,12 +97,37 @@ impl<'a> UdpFloodTest<'a> {
                 }));
             }
         }
-        
-        while self.target_server.is_running() {
-            thread::sleep(std::time::Duration::from_secs(1));
-            if self.logging {
-                println!("[UdpFloodTest] {}: Received total {} packets", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(), self.target_server.flood_counter());
+        let is_server_running = self.target_server.running.clone();
+        let logging = self.logging;
+        let duration = self.duration;
+        let total = self.target_server.total_processed_packets.clone();
+
+        loop {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+            if is_server_running.load(Ordering::Relaxed) {
+                break;
             }
+        }
+        let start = std::time::Instant::now();
+        while is_server_running.load(Ordering::Relaxed) {
+            if start.elapsed() >= duration {
+                break;
+            }
+            if logging {
+                println!(
+                    "[UdpFloodTest] {}: Target Server received {} packets",
+                    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                    total.load(Ordering::Relaxed)
+                );
+            }
+            std::thread::sleep(std::time::Duration::from_secs(1));
+        }
+        if logging {
+            println!(
+                "[UdpFloodTest] {}: Flood test completed. Total packets server received: {}",
+                std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                self.target_server.total_processed_packets.load(Ordering::Relaxed)
+            );
         }
     }
 }
