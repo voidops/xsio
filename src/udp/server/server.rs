@@ -70,7 +70,7 @@ impl XUdpServer {
             .name("XUdpServer->Stats".to_string())
             .spawn(move || {
                 loop {
-                    std::thread::sleep(Duration::from_secs(1));
+                    std::thread::sleep(Duration::from_millis(250));
                     total.store(processed_packets.iter().map(|c| c.load(Ordering::Relaxed)).sum(), Ordering::Relaxed);
                 }
             })?;
