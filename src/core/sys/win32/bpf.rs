@@ -1,6 +1,5 @@
 use std::os::raw::{c_char, c_int, c_long, c_uint, c_ulonglong};
 
-use crate::syscall;
 
 pub const SYS_BPF: c_long = 321;
 pub const BPF_SET_LINK_XDP_FD: c_int = 50;
@@ -300,7 +299,8 @@ pub struct BpfMapDef {
 }
 
 pub unsafe fn bpf(cmd: BpfCmd, attr: *const bpf_attr, size: u32) -> i32 {
-    syscall(SYS_BPF as usize, cmd, attr, size) as i32
+    //syscall(SYS_BPF as usize, cmd, attr, size) as i32
+    -1
 }
 pub unsafe fn bpf_set_link_xdp_fd(ifindex: u32, fd: i32, flags: u32) -> i32 {
     bpf(

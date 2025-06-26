@@ -18,7 +18,7 @@ mod tests {
                     }
                 });
             })
-        .debug(true);
+            .debug(true);
         server.start(2).unwrap();
         assert!(server.is_running());
         server.floodtest(42070)

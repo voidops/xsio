@@ -187,5 +187,5 @@ extern "system" {
     pub fn RIOReceive(socket: usize, buf: *mut u8, len: usize, flags: c_int, bytes_received: *mut usize) -> c_int;
 }
 extern "C" {
-    pub fn syscall(num: usize, ...) -> isize;
+    //pub fn syscall(num: usize, ...) -> isize;
 }
